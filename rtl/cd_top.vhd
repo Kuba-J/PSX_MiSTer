@@ -2041,21 +2041,22 @@ begin
             
                addSeekTime <= '1';
                
-               -- todo: research more accurate values
-               if (diffLBA < 3) then
-                  seekTimeMul <= 3;
-               elsif (diffLBA < 5) then
-                  seekTimeMul <= diffLBA;
-               elsif (diffLBA < 32) then
-                  seekTimeMul <= 5;
-               elsif (diffLBA < 75) then
-                  seekTimeMul <= 5 + diffLBA / 8; -- 5 .. 14
-               elsif (diffLBA < 4500) then
-                  seekTimeMul <= 14 + diffLBA / 256; -- 14 .. 31
+               if (driveState = DRIVE_PLAYING) then
+                  -- Only forward wait, never real seek during play
+                  seekTimeMul <= 2 + diffLBA + (diffLBA mod 2);
                else
-                  seekTimeMul <= 31 + diffLBA / 8192; -- 31 .. 73
+                  if (diffLBA <= 4) then
+                     seekTimeMul <= 4 + (diffLBA mod 2);
+                  elsif (diffLBA < 32) then
+                     seekTimeMul <= 5 + (diffLBA mod 2);
+                  elsif (diffLBA < 75) then
+                     seekTimeMul <= 5 + diffLBA / 8 + (diffLBA mod 4);
+                  elsif (diffLBA < 4500) then
+                     seekTimeMul <= 14 + diffLBA / 256 + (diffLBA mod 4);
+                  else
+                     seekTimeMul <= 31 + diffLBA / 8192 + (diffLBA mod 4);
+                  end if;
                end if;
-                  
             end if;
             
             if (addSeekTime = '1') then
